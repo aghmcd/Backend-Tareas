@@ -1,10 +1,19 @@
 import { Router } from 'express';
 import { usurioRepository } from '../model/mongoDB/Repository/usuario.js';
 import bycript from 'bcrypt';
+import { upload } from '../middleware/multerconfig.js';
+import cloudinary from 'cloudinary';
+import fs from 'node:fs';
 
 export const routerUsuario = Router();
 
 let contador = 0;
+
+cloudinary.v2.config({
+    cloud_name: 'dhvv1pzeo',
+    api_key: '491713593921595',
+    api_secret: 'pD-uTdsT4I_riyGqroSYSqLYVUI'
+});
 
 
 // a middleware function with no mount path. This code is executed for every request to the router
@@ -24,10 +33,13 @@ routerUsuario.get('/', async function(req,res,next) {
         }
      } catch (err) {
         console.error("Error buscando todos los usuarios", err.message);
+        res.status(500).json({
+            mensaje: err.message
+        });
      }
 });
 
-routerUsuario.post('/', async function(req,res,next){
+routerUsuario.post('/', upload.single('avatar'), async function(req,res,next){
     let {
         nombre,
         apellidos,
@@ -41,6 +53,18 @@ routerUsuario.post('/', async function(req,res,next){
     if (!buscarUsuario) {
         const hash = await bycript.hash(contrasena, 10);
         contrasena = hash;
+        let avatarUrl = '';
+        if(req.file){
+            const avatarPath = req.file.path;
+            const uploadResult = await cloudinary.v2.uploader.upload(avatarPath, {
+                folder: 'user_avatar',
+                public_id: nombre.toLowerCase(),
+                overwrite: true
+            });
+            avatarUrl = uploadResult.secure_url
+            avatar = avatarUrl;
+            fs.unlinkSync(avatarPath);
+        }
         try {
             const nUsuario = await usurioRepository.addUsuario({usuario: {
                 nombre,
@@ -53,7 +77,7 @@ routerUsuario.post('/', async function(req,res,next){
             res.status(201).json(nUsuario);
         } catch (err) {
             console.error('Error al crear el usuario Controller', err.message);
-            res.stattus(400).json({message: 'Error al crear al usuario', error: err.message});
+            res.status(500).json({message: 'Error al crear al usuario', error: err.message});
         }
     } else {
         res.status(200).json({
@@ -76,6 +100,7 @@ routerUsuario.get('/:id', async function(req,res,next) {
         next()
     } catch (err) {
         console.log('Error al bucar usario por ID', err.message)
+        res.status(500).json({message: 'Error al buscar usuario', error: err.message});
     } 
 });
 
@@ -96,7 +121,8 @@ routerUsuario.patch('/:id', async function(req,res,next){
         }
         next();
     } catch (err) {
-        console.error('Error al cambiar el password')
+        console.error('Error al cambiar el password', err.message);
+        res.status(500).json({message: 'Error al cambiar la contraseña', error: err.message});
     }
 });
 
@@ -118,6 +144,7 @@ routerUsuario.delete('/:id', async function(req,res,next){
         next();
     } catch {
         console.error('Error al eliinar usuario', err.message);
+        res.status(500).json({message: 'Error al eliminar al usuario', error: err.message});
     }
 });
 
