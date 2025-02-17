@@ -2,19 +2,14 @@ import { Router } from 'express';
 import { usurioRepository } from '../model/mongoDB/Repository/usuario.js';
 import bycript from 'bcrypt';
 import { upload } from '../middleware/multerconfig.js';
-import cloudinary from 'cloudinary';
 import fs from 'node:fs';
+import 'dotenv/config';
+import { bodyEmail } from '../Comunes/Email/usuarios.js';
+import { uploadResult } from '../Comunes/Cloudinary/usuario.js';
 
 export const routerUsuario = Router();
 
 let contador = 0;
-
-cloudinary.v2.config({
-    cloud_name: 'dhvv1pzeo',
-    api_key: '491713593921595',
-    api_secret: 'pD-uTdsT4I_riyGqroSYSqLYVUI'
-});
-
 
 // a middleware function with no mount path. This code is executed for every request to the router
 routerUsuario.use(function(req,res,next){
@@ -53,16 +48,9 @@ routerUsuario.post('/', upload.single('avatar'), async function(req,res,next){
     if (!buscarUsuario) {
         const hash = await bycript.hash(contrasena, 10);
         contrasena = hash;
-        let avatarUrl = '';
         if(req.file){
             const avatarPath = req.file.path;
-            const uploadResult = await cloudinary.v2.uploader.upload(avatarPath, {
-                folder: 'user_avatar',
-                public_id: nombre.toLowerCase(),
-                overwrite: true
-            });
-            avatarUrl = uploadResult.secure_url
-            avatar = avatarUrl;
+            avatar = await uploadResult(avatarPath, nombre);
             fs.unlinkSync(avatarPath);
         }
         try {
@@ -75,6 +63,7 @@ routerUsuario.post('/', upload.single('avatar'), async function(req,res,next){
                 avatar
             }});
             res.status(201).json(nUsuario);
+            bodyEmail(nUsuario.email, nUsuario.avatar, nUsuario._id);
         } catch (err) {
             console.error('Error al crear el usuario Controller', err.message);
             res.status(500).json({message: 'Error al crear al usuario', error: err.message});
