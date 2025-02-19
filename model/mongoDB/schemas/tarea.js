@@ -6,7 +6,7 @@ const tareaSchema = new Schema({
     progreso: {type: String, require: true, lowercase: true, default: 'sin iniciar'},
     fechaInicio: {type: Date, require: true, default: () => Date.now()},
     fechaEstFin: {type: Date, require: true},
-    fechafin:{type: Date, require: false},
+    fechafin: {type: Date, require: false, default: () => new Date('1900-01-01')},
     prioridad: {type: String, require: true, lowercase: true},
     tareaCreadaEl: {type: Date, require: true, default: () => Date.now()},
     tareaModificadaEl: {type: Date, require: true, default: () => Date.now()},

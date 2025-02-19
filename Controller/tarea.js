@@ -11,6 +11,21 @@ routerTarea.use(function(req,res,next){
     console.log('number(s) of request(s):', contador);
     next();
 });
+// get all tasks
+routerTarea.get('/', async function(req,res){
+    try {
+        const tareas = await tareaRepository.GetAllTask();
+        if(tareas){
+            res.status(200).json(tareas);
+        } else {
+            res.status(400).json(tareas);
+        }
+    } catch (err) {
+        console.err('Error al obtener las tareas', err.message);
+        res.status(500).json({mensaje: `error al intentar obtener las respuesta: ${err.message}`});
+    }
+})
+
 // add new task
 routerTarea.post('/', async function(req,res,next){
     try {
@@ -29,11 +44,16 @@ routerTarea.post('/', async function(req,res,next){
         usuario: usuario,
         comentarios: [{comentario: comentario}]
        };
-       const nuevaTarea = await tareaRepository.addTarea(nTask)
-       if (nuevaTarea._id) {
-        res.status(201).json(nuevaTarea)
+       const existeTarea = await tareaRepository.getTaskbyName(tarea);
+       if(!existeTarea) {
+        const nuevaTarea = await tareaRepository.addTarea(nTask)
+        if (nuevaTarea._id) {
+            res.status(201).json(nuevaTarea)
+        } else {
+            res.status(500).json(nuevaTarea)
+        }
        } else {
-        res.status(500).json(nuevaTarea)
+        res.status(401).json(existeTarea);
        }
     } catch (err) {
         res.status(400).json({message: err.message});
@@ -52,6 +72,32 @@ routerTarea.get('/:id', async function(req,res){
     } catch (err) {
         console.error('Error Buscando el ID', err.message)
     }
+});
+//update task only will update progress & prioridad
+routerTarea.patch('/:id', async function(req,res){
+    try {
+        const id = req.params;
+        const prioridad = req.body.prioridad
+        const progreso = req.body.progreso;
+        const comentario = {comentario: 'tarea cambia progreso a En Proceso'};
+        const task = await tareaRepository.getTareaByID(id);
+        const input = {
+            tarea: task.tarea,
+            progreso: progreso,
+            prioridad: prioridad,
+            comentario: comentario
+        };
+        const tareaUpdate = await tareaRepository.updateTarea(id, input);
+        if(tareaUpdate._id){
+            res.status(201).json(tareaUpdate);
+        } else {
+            res.status(400).json({mensaje: `No se pudo actualizar la tarea ${task._id}`});
+        }
+    } catch (err) {
+        console.error('Error al actualizar la tarea', err.message);
+    }
+    
+
 });
 //add a comment to the task, if the task isn't in progress the task is changed to "en progreso" 
 routerTarea.patch('/addcomment/:id', async function(req,res){
@@ -77,4 +123,25 @@ routerTarea.patch('/addcomment/:id', async function(req,res){
     } catch (err) {
         console.error('Error adicionando Comentarios', err.message);
     } 
+});
+//it is to close the task only
+routerTarea.patch('/endtask/:id', async function(req,res){
+   try {
+    const id = req.params;
+    const progreso = req.body.progreso;
+    const fechaFin = new Date().now;
+    const input = {
+        progreso: progreso,
+        fechaFin: fechaFin
+    };
+    const respuesta = await tareaRepository.endTask(id, input);
+    if(respuesta._id){
+        res.status(200).json(respuesta);
+    } else {
+        res.status(400).json(respuesta);
+    }
+   } catch (err) {
+    console.error('error en la capa de negocio', err.message);
+    res.status(500).json({mensaje: err.message});
+   } 
 });

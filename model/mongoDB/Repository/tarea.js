@@ -33,26 +33,28 @@ export class tareaRepository{
 
     static async GetAllTask() {
         try {
-            const tareas = await Tarea.find();
+            const tareas = await Tarea.find().populate('usuario');
             return tareas
         } catch (err) {
             console.error('Error en la BD', err.message)
         }
     };
     
-    static async updateTarea(id, {input}){
+    static async updateTarea(id, input){
         try {
-            const _id = mongoose.Types.ObjectId(id);
+            const _id = new mongoose.Types.ObjectId(id);
             const {
                 task,
                 progreso,
-                prioridad
+                prioridad,
+                comentario
             } = input
             const tarea = await Tarea.findById(_id);
             if (tarea) {
                 tarea.tarea = task;
                 tarea.progreso = progreso;
                 tarea.prioridad = prioridad;
+                tarea.comentarios.push(comentario);
                 await tarea.save();
                 return tarea;
             } else {
@@ -63,9 +65,9 @@ export class tareaRepository{
         } 
     };
 
-    static async endTask(id, {input}){
+    static async endTask(id, input){
         try {
-            const _id = mongoose.Types.ObjectId(id);
+            const _id = new mongoose.Types.ObjectId(id);
             const {
                 progreso,
                 fechaFin,
@@ -98,4 +100,13 @@ export class tareaRepository{
             return errorBD;
         }
     };
+
+    static async getTaskbyName(task){
+        try {
+            const tarea = await Tarea.where('tarea').equals(task);
+            return tarea;
+        } catch (err) {
+            console.error('Error al buscar la Tarea', err.message)
+        }
+    }
 }
