@@ -11,7 +11,7 @@ routerTarea.use(function(req,res,next){
     console.log('number(s) of request(s):', contador);
     next();
 });
-
+// add new task
 routerTarea.post('/', async function(req,res,next){
     try {
        const {
@@ -39,7 +39,7 @@ routerTarea.post('/', async function(req,res,next){
         res.status(400).json({message: err.message});
     }
 });
-
+//get task by id
 routerTarea.get('/:id', async function(req,res){
     try{
         const id = req.params;
@@ -53,7 +53,7 @@ routerTarea.get('/:id', async function(req,res){
         console.error('Error Buscando el ID', err.message)
     }
 });
-
+//add a comment to the task, if the task isn't in progress the task is changed to "en progreso" 
 routerTarea.patch('/addcomment/:id', async function(req,res){
     try {
         const id = req.params;
@@ -64,6 +64,8 @@ routerTarea.patch('/addcomment/:id', async function(req,res){
         const tareaBase = await tareaRepository.getTareaByID(id);
         if (tareaBase.progreso === 'sin iniciar'){
             progMog = 'en progreso';
+        } else {
+            progMog = tareaBase.progreso;
         }
         const nuevoComentario = {comentario: comentario};
         const respuesta = await tareaRepository.addComent(id, nuevoComentario, progMog);

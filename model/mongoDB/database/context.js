@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
+import 'dotenv/config';
 
-const uri = 'mongodb+srv://jorirovi:5RR3j9TtBxqg@mongodb101.0evp19y.mongodb.net/mcdtaskDB?retryWrites=true&w=majority&appName=MongoDB101'
+const uri = process.env.DBCONN;
 const clientOptions = {
     serverApi: {
         version: '1',
