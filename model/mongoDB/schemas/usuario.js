@@ -6,6 +6,7 @@ const usuarioShema = new mongoose.Schema({
     email: {type: String, require: true},
     contrasena: {type: String, require: true},
     fechaNacimiento: {type: Date, require: true},
+    idTelegram: {type: String, require: false, default: 'N/A'},
     avatar: {type: String, require: false}
 });
 

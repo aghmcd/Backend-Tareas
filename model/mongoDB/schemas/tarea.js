@@ -1,6 +1,16 @@
 import mongoose from 'mongoose'
 const { Schema, model, SchemaTypes } = mongoose;
 
+const subTarea = new Schema({
+    subTarea: {type: String, require: true, default: () => 'Revisar la tarea asignada'},
+    completado: {type: Boolean, require: true, default: () => false}
+});
+
+const comentario = new Schema({
+    comentario: {type: String, require: true},
+    fecha: {type: Date, require: true, default: () => Date.now()}
+});
+
 const tareaSchema = new Schema({
     tarea: {type: String, require: true},
     progreso: {type: String, require: true, lowercase: true, default: 'sin iniciar'},
@@ -11,10 +21,8 @@ const tareaSchema = new Schema({
     tareaCreadaEl: {type: Date, require: true, default: () => Date.now()},
     tareaModificadaEl: {type: Date, require: true, default: () => Date.now()},
     usuario: {type: SchemaTypes.ObjectId, ref: 'Usuarios', require: true},
-    comentarios: [{
-        comentario: {type: String, require: true},
-        fecha: {type: Date, require: true, default: () => Date.now()}
-    }]
+    subtareas: [subTarea],
+    comentarios: [comentario]
 });
 
 tareaSchema.pre('save', function (next) {

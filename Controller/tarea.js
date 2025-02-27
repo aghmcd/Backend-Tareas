@@ -1,5 +1,7 @@
 import {Router} from 'express';
 import { tareaRepository } from '../model/mongoDB/Repository/tarea.js';
+import { usurioRepository } from '../model/mongoDB/Repository/usuario.js';
+import { telegramNTask } from '../Comunes/Telegram/mensaje.js';
 
 export const routerTarea = Router();
 let contador = 0;
@@ -34,21 +36,28 @@ routerTarea.post('/', async function(req,res,next){
         fechaEstFin,
         prioridad,
         usuario,
-        comentario
        } = req.body;
-
+       
+       const user = await usurioRepository.getUsuarioById(usuario);
+       const fechaEstimada = new Date(fechaEstFin).toISOString();
+       const comentario = `Tarea asignada a ${user.nombre} fecha de finalizacion ${fechaEstimada}`;
        const nTask = {
         tarea: tarea,
         fechaEstFin: new Date(fechaEstFin),
         prioridad: prioridad,
         usuario: usuario,
+        subtareas: [{}],
         comentarios: [{comentario: comentario}]
        };
        const existeTarea = await tareaRepository.getTaskbyName(tarea);
-       if(!existeTarea) {
+       if(existeTarea !== null) {
         const nuevaTarea = await tareaRepository.addTarea(nTask)
         if (nuevaTarea._id) {
             res.status(201).json(nuevaTarea)
+            if(user.idTelegram !== 'N/A'){
+                const efechafin = new Date(nuevaTarea.fechaEstFin).toISOString();
+                telegramNTask(user.nombre, nuevaTarea.tarea, efechafin.split('T')[0], user.idTelegram);
+            } 
         } else {
             res.status(500).json(nuevaTarea)
         }

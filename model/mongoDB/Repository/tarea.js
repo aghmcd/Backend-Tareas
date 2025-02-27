@@ -33,7 +33,7 @@ export class tareaRepository{
 
     static async GetAllTask() {
         try {
-            const tareas = await Tarea.find().populate('usuario');
+            const tareas = await Tarea.find().populate('usuario', 'nombre').exec();
             return tareas
         } catch (err) {
             console.error('Error en la BD', err.message)

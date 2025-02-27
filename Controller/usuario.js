@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import 'dotenv/config';
 import { bodyEmail } from '../Comunes/Email/usuarios.js';
 import { uploadResult } from '../Comunes/Cloudinary/usuario.js';
+import { telegramWMsg } from '../Comunes/Telegram/mensaje.js';
 
 export const routerUsuario = Router();
 
@@ -41,6 +42,7 @@ routerUsuario.post('/', upload.single('avatar'), async function(req,res,next){
         email,
         contrasena,
         fechaNacimiento,
+        idTelegram,
         avatar
     } = req.body;
 
@@ -60,10 +62,14 @@ routerUsuario.post('/', upload.single('avatar'), async function(req,res,next){
                 email,
                 contrasena,
                 fechaNacimiento,
+                idTelegram,
                 avatar
             }});
             res.status(201).json(nUsuario);
             bodyEmail(nUsuario.email, nUsuario.avatar, nUsuario._id);
+            if(nUsuario.idTelegram != 'N/A') {
+                telegramWMsg(nUsuario.nombre, nUsuario.idTelegram);
+            }
         } catch (err) {
             console.error('Error al crear el usuario Controller', err.message);
             res.status(500).json({message: 'Error al crear al usuario', error: err.message});
