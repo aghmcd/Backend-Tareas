@@ -154,3 +154,32 @@ routerTarea.patch('/endtask/:id', async function(req,res){
     res.status(500).json({mensaje: err.message});
    } 
 });
+//add subtask to teh task
+routerTarea.patch('/addsubtask/:id', async function(req, res){
+    try {
+        const id = req.params;
+        const nuevaSubtarea = {subTarea: req.body.subtarea}
+        const tareaUpdate = await tareaRepository.getTareaByID(id);
+        if (tareaUpdate) {
+            const respuesta = await tareaRepository.addSubTask(id, nuevaSubtarea);
+            if (respuesta._id) {
+                res.status(200).json(respuesta);
+            } else {
+                res.status(501).json(respuesta);
+            }
+        };
+    } catch (err) {
+        throw new Error("Error adicionando la tarea capa negocio", err.message);
+    }
+});
+//close subtask
+routerTarea.patch('/closesubtask/:id', async function(req,res){
+    try {
+        const { id } = req.params
+        const { idsubtask } = req.query
+        const respuesta = await tareaRepository.closeSubTask(id, idsubtask);
+        res.status(200).json(respuesta);
+    } catch (err) {
+        console.error("Error cerrando la tarea", err.message);
+    }
+});

@@ -101,6 +101,34 @@ export class tareaRepository{
         }
     };
 
+    //add sub-task
+    static async addSubTask(id, input){
+        try {
+            const _id = new mongoose.Types.ObjectId(id);
+            const tarea = await Tarea.findById(_id);
+            tarea.subtareas.push(input);
+            await tarea.save();
+            return tarea;
+        } catch (err) {
+            throw new Error('Error al adicionar sub-tarea en la bd', err.message);
+        }
+    };
+
+    //close subtask
+    static async closeSubTask(id, idST){
+        try {
+            const _id = new mongoose.Types.ObjectId(id);
+            const _idST = new mongoose.Types.ObjectId(idST);
+            const tarea = await Tarea.findById(_id);
+            const subTarea = tarea.subtareas.find(st => st._id.equals(_idST));
+            subTarea.completado = true
+            await tarea.save()
+            return tarea;
+        } catch (err) {
+            throw new Error ("Error cerrando Sub Tarea", err.message);
+        }
+    }
+
     static async getTaskbyName(task){
         try {
             const tarea = await Tarea.where('tarea').equals(task);
